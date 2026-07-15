@@ -10,16 +10,37 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
 public class DirectoryWatcher {
     private final ExecutorService executor;
-    private volatile boolean running = true;
     private final Path inputDirectory;
+    private final FileProcessor fileProcessor;
+
+    private volatile boolean running = true;
 
     public DirectoryWatcher() {
-        this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        this.inputDirectory = Paths.get(
-                System.getProperty("user.home"),
-                "data", "in"
+        this(
+                Executors.newFixedThreadPool(
+                        Runtime.getRuntime().availableProcessors()
+                ),
+                Paths.get(
+                        System.getProperty("user.home"),
+                        "data",
+                        "in"
+                ),
+                new FileProcessor()
         );
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+
+        Runtime.getRuntime().addShutdownHook(
+                new Thread(this::shutdown)
+        );
+    }
+
+    DirectoryWatcher(
+            ExecutorService executor,
+            Path inputDirectory,
+            FileProcessor fileProcessor) {
+
+        this.executor = executor;
+        this.inputDirectory = inputDirectory;
+        this.fileProcessor = fileProcessor;
     }
 
     public void start() {
@@ -28,11 +49,17 @@ public class DirectoryWatcher {
 
             Files.createDirectories(inputDirectory);
 
-            WatchService watchService = FileSystems.getDefault().newWatchService();
+            WatchService watchService =
+                    FileSystems.getDefault().newWatchService();
 
-            inputDirectory.register(watchService, ENTRY_CREATE);
+            inputDirectory.register(
+                    watchService,
+                    ENTRY_CREATE
+            );
 
-            System.out.println("Monitorando pasta: " + inputDirectory);
+            System.out.println(
+                    "Monitorando pasta: " + inputDirectory
+            );
 
             monitorDirectory(watchService);
 
@@ -65,7 +92,7 @@ public class DirectoryWatcher {
         }
     }
 
-    private void processEvent(WatchEvent<?> event) {
+    void processEvent(WatchEvent<?> event) {
 
         Path fileName = (Path) event.context();
 
@@ -79,11 +106,12 @@ public class DirectoryWatcher {
 
         executor.submit(() -> processFile(file));
     }
-    private void processFile(Path file) {
+
+    void processFile(Path file) {
 
         try {
 
-            new FileProcessor().process(file);
+            fileProcessor.process(file);
 
         } catch (Exception e) {
 
@@ -92,16 +120,24 @@ public class DirectoryWatcher {
 
         }
     }
-    private void shutdown(){
+
+    void shutdown() {
+
         running = false;
         executor.shutdown();
 
         try {
-            if (!executor.awaitTermination(5, TimeUnit.SECONDS)){
+
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+
                 executor.shutdownNow();
+
             }
-        }catch (InterruptedException e){
-            executor.shutdown();
+
+        } catch (InterruptedException e) {
+
+            executor.shutdownNow();
+
             Thread.currentThread().interrupt();
         }
     }

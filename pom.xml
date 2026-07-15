@@ -87,6 +87,12 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+
+                        <configuration>
+                            <excludes>
+                                <exclude>br/com/agi/model/**</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
 
                     <execution>
@@ -115,6 +121,11 @@
                                     </limits>
                                 </rule>
                             </rules>
+
+                            <excludes>
+                                <exclude>br/com/agi/model/**</exclude>
+                            </excludes>
+
                         </configuration>
                     </execution>
                 </executions>

@@ -1,15 +1,23 @@
 # Analisador de Dados
 
+[![CircleCI](https://circleci.com/gh/leoniCS99/analisador-de-dados.svg?style=shield)](https://circleci.com/gh/leoniCS99/analisador-de-dados)
+
+[![codecov](https://codecov.io/gh/leoniCS99/analisador-de-dados/branch/master/graph/badge.svg)](https://codecov.io/gh/leoniCS99/analisador-de-dados)
+
+---
+
 ## Objetivo
 
-Aplicação desenvolvida em Java para processar arquivos de vendas no formato `.dat`.
+Aplicação desenvolvida em **Java 17** para processamento de arquivos de vendas no formato `.dat`.
 
-O sistema monitora continuamente um diretório de entrada, identifica novos arquivos, processa seus registros e gera automaticamente um relatório no diretório de saída contendo:
+A aplicação monitora continuamente um diretório de entrada, identifica novos arquivos, realiza o processamento de seus registros e gera automaticamente um relatório contendo:
 
 - Quantidade de clientes
 - Quantidade de vendedores
 - ID da venda mais cara
 - Pior vendedor
+
+Os arquivos processados são gravados automaticamente no diretório de saída com o sufixo `.done.dat`.
 
 ---
 
@@ -32,7 +40,6 @@ src
 ├── main
 │   ├── java
 │   │   └── br.com.agi
-│   │       ├── config
 │   │       ├── enums
 │   │       ├── model
 │   │       ├── service
@@ -41,18 +48,23 @@ src
 │
 └── test
     ├── java
+    │   ├── integration
+    │   └── service
     └── resources
+        └── stub
 ```
 
 ---
 
 # Arquitetura
 
-A aplicação foi organizada em pequenas responsabilidades seguindo princípios de Clean Code e SOLID, evitando abstrações desnecessárias para o tamanho do projeto.
+O projeto foi desenvolvido seguindo princípios de **Clean Code** e **SOLID**, mantendo uma arquitetura simples, coesa e adequada ao escopo do desafio.
+
+Cada componente possui responsabilidade única.
 
 ## DirectoryWatcher
 
-Responsável por monitorar continuamente o diretório de entrada utilizando a API `WatchService`.
+Responsável pelo monitoramento contínuo do diretório de entrada utilizando a API `WatchService`.
 
 Sempre que um novo arquivo `.dat` é encontrado, seu processamento é iniciado de forma assíncrona utilizando `ExecutorService`.
 
@@ -62,18 +74,17 @@ Sempre que um novo arquivo `.dat` é encontrado, seu processamento é iniciado d
 
 Responsável por:
 
-- Ler o arquivo
-- Interpretar cada linha
-- Converter os registros em objetos do domínio
-- Acionar a geração do relatório
-
-Também trata registros inválidos, garantindo que uma linha incorreta não interrompa o processamento do restante do arquivo.
+- leitura do arquivo;
+- parsing dos registros;
+- conversão dos dados para objetos de domínio;
+- tratamento de linhas inválidas;
+- geração do relatório.
 
 ---
 
 ## ReportService
 
-Centraliza toda a regra de negócio responsável pela geração do relatório.
+Centraliza toda a regra de negócio da aplicação.
 
 Calcula:
 
@@ -86,47 +97,47 @@ Calcula:
 
 ## FileWriterUtil
 
-Responsável exclusivamente pela escrita do arquivo de saída.
+Responsável exclusivamente pela geração do arquivo de saída.
 
 ---
 
 ## RecordType
 
-Utilizado para eliminar o uso de códigos literais (`001`, `002` e `003`), tornando o código mais legível e de fácil manutenção.
+Enum utilizado para eliminar códigos literais (`001`, `002` e `003`), tornando o código mais legível e de fácil manutenção.
 
 ---
 
 # Concorrência
 
-A aplicação suporta o processamento simultâneo de múltiplos arquivos.
+O processamento dos arquivos ocorre de forma concorrente.
 
 Foi utilizado um `ExecutorService` com quantidade de threads baseada no número de processadores disponíveis da máquina.
 
-Cada arquivo é processado de forma independente, permitindo processamento concorrente sem compartilhamento de estado.
+Cada arquivo é processado de maneira independente, sem compartilhamento de estado entre execuções.
 
 ---
 
 # Estrutura esperada
 
-Entrada
+### Entrada
 
 ```
-%HOMEPATH%/data/in
+%USER_HOME%/data/in
 ```
 
-Saída
+### Saída
 
 ```
-%HOMEPATH%/data/out
+%USER_HOME%/data/out
 ```
 
-Arquivos de entrada
+### Arquivos de entrada
 
 ```
 arquivo.dat
 ```
 
-Arquivos gerados
+### Arquivos gerados
 
 ```
 arquivo.done.dat
@@ -136,13 +147,13 @@ arquivo.done.dat
 
 # Como executar
 
-Compilar o projeto
+## Compilar o projeto
 
 ```bash
-mvn clean package
+mvn clean verify
 ```
 
-Executar
+## Executar
 
 ```bash
 java -jar target/analisador-de-dados-1.0.0.jar
@@ -150,75 +161,96 @@ java -jar target/analisador-de-dados-1.0.0.jar
 
 ---
 
-# Executando os testes
+# Testes
 
-Executar todos os testes
+## Executar todos os testes
 
 ```bash
 mvn test
 ```
 
-Executar validação completa
+## Executar validação completa
 
 ```bash
-mvn verify
+mvn clean verify
 ```
 
 ---
 
-# Cobertura de testes
+# Cobertura de Testes
 
 O projeto utiliza:
 
 - JUnit 5
 - Mockito
 - JaCoCo
+- Codecov
 
 Foram implementados:
 
 - Testes unitários
 - Testes de integração
 
-Os testes cobrem o fluxo completo de:
+Os testes cobrem o fluxo completo da aplicação:
 
-Leitura → Processamento → Escrita
+```
+Leitura
+      ↓
+Processamento
+      ↓
+Geração do relatório
+      ↓
+Escrita do arquivo
+```
 
-Incluindo:
+### Cenários cobertos
 
-- parsing dos registros;
-- tratamento de linhas inválidas;
-- cálculo da venda mais cara;
-- identificação do pior vendedor;
-- geração do arquivo de saída.
+- Parsing correto dos registros
+- Tratamento de linhas malformadas
+- Cálculo da venda mais cara
+- Identificação do pior vendedor
+- Geração do arquivo `.done.dat`
+- Escrita do relatório
+- Processamento concorrente do monitor de diretório
+
+### Cobertura atual
+
+| Métrica | Resultado |
+|---------|----------:|
+| Line Coverage | **81%** |
+| Branch Coverage | **65%** |
+
+A cobertura é gerada automaticamente pelo **JaCoCo** e publicada no **Codecov** durante a execução da pipeline.
 
 ---
 
-# Pipeline
+# Integração Contínua
 
-O projeto possui integração contínua utilizando CircleCI.
+O projeto utiliza **CircleCI** para integração contínua.
 
-A pipeline executa automaticamente:
+A cada commit são executadas automaticamente as seguintes etapas:
 
-- Build
-- Testes
-- Análise de cobertura com JaCoCo
-- Envio da cobertura para o Codecov
+1. Checkout do código
+2. Build do projeto
+3. Execução dos testes
+4. Geração do relatório de cobertura (JaCoCo)
+5. Publicação da cobertura no Codecov
 
 ---
 
 # Decisões Arquiteturais
 
-Durante o desenvolvimento foi priorizada uma solução simples, objetiva e de fácil manutenção.
-
-As responsabilidades foram separadas apenas quando agregavam valor ao projeto, evitando a criação de camadas e padrões desnecessários para o escopo do desafio.
+Durante o desenvolvimento foi priorizada uma solução simples e de fácil manutenção.
 
 As principais decisões foram:
 
 - separação entre processamento e regra de negócio;
-- utilização de Enum para tipos de registro;
-- processamento concorrente utilizando ExecutorService;
-- tratamento de linhas inválidas sem interromper a execução;
-- escrita do relatório em componente dedicado.
+- utilização de Enum para representar os tipos de registro;
+- utilização de ExecutorService para processamento concorrente;
+- tratamento de linhas inválidas sem interromper o processamento;
+- componente dedicado para escrita do relatório;
+- testes unitários focados nas regras de negócio;
+- testes de integração validando o fluxo completo da aplicação.
 
 ---
 
@@ -228,22 +260,8 @@ Ferramentas de Inteligência Artificial foram utilizadas como apoio durante o de
 
 - discussão de alternativas de implementação;
 - revisão da arquitetura;
-- identificação de oportunidades de refatoração;
-- elaboração dos testes automatizados;
+- sugestões de refatoração;
+- apoio na elaboração dos testes automatizados;
 - revisão da documentação.
 
-Todas as sugestões foram analisadas, adaptadas e validadas manualmente antes de serem incorporadas ao projeto.
-
-O código entregue foi revisado integralmente e todas as decisões arquiteturais são de responsabilidade do autor.
-
 ---
-
-# Melhorias Futuras
-
-Como possíveis evoluções do projeto:
-
-- suporte a novos tipos de registros;
-- configuração externa dos diretórios;
-- utilização de framework de logging;
-- processamento distribuído;
-- suporte a diferentes formatos de entrada.

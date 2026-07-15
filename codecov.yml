@@ -15,3 +15,7 @@ comment:
   layout: "reach,diff,flags,files,footer"
   behavior: default
   require_changes: false
+
+ignore:
+  - "src/main/java/br/com/agi/model/**"
+  - "src/main/java/br/com/agi/enums/**"

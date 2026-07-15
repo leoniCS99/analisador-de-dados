@@ -12,11 +12,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReportServiceTest {
 
     private final ReportService reportService = new ReportService();
-
     @Test
     @DisplayName("Should generate report correctly")
     void t1() {
@@ -63,7 +63,6 @@ class ReportServiceTest {
         assertEquals("Paulo", report.getWorstSalesman());
 
     }
-
     @Test
     @DisplayName("Should return N/A when there are no sales")
     void t2() {
@@ -84,7 +83,6 @@ class ReportServiceTest {
         assertEquals("N/A", report.getWorstSalesman());
 
     }
-
     @Test
     @DisplayName("Should identify the worst salesman using total sales")
     void t3() {
@@ -122,7 +120,6 @@ class ReportServiceTest {
         assertEquals("Paulo", report.getWorstSalesman());
 
     }
-
     @Test
     @DisplayName("Should identify the most expensive sale")
     void t4() {
@@ -150,7 +147,35 @@ class ReportServiceTest {
         );
 
         assertEquals("20", report.getMostExpensiveSaleId());
+    }
+    @Test
+    @DisplayName("Should handle sales with same total value")
+    void t5() {
 
+        Sale sale1 = new Sale(
+                "10",
+                List.of(
+                        new SaleItem(1, 1, new BigDecimal("100"))
+                ),
+                "Pedro"
+        );
+
+        Sale sale2 = new Sale(
+                "20",
+                List.of(
+                        new SaleItem(1, 1, new BigDecimal("100"))
+                ),
+                "Paulo"
+        );
+
+        Report report = reportService.generate(
+                List.of(),
+                List.of(),
+                List.of(sale1, sale2)
+        );
+        assertTrue(report.getMostExpensiveSaleId().equals("10") ||
+                report.getMostExpensiveSaleId().equals("20")
+        );
     }
 
 }

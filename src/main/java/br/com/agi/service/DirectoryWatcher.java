@@ -4,21 +4,22 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 
 public class DirectoryWatcher {
-
-    private final ExecutorService executor =
-            Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
+    private final ExecutorService executor;
+    private volatile boolean running = true;
     private final Path inputDirectory;
 
     public DirectoryWatcher() {
+        this.executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.inputDirectory = Paths.get(
                 System.getProperty("user.home"),
                 "data", "in"
         );
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
     }
 
     public void start() {
@@ -43,14 +44,12 @@ public class DirectoryWatcher {
 
             Thread.currentThread().interrupt();
             System.err.println("Monitoramento interrompido.");
-
         }
-
     }
 
     private void monitorDirectory(WatchService watchService) throws InterruptedException {
 
-        while (true) {
+        while (running) {
 
             WatchKey key = watchService.take();
 
@@ -63,9 +62,7 @@ public class DirectoryWatcher {
             if (!key.reset()) {
                 break;
             }
-
         }
-
     }
 
     private void processEvent(WatchEvent<?> event) {
@@ -81,9 +78,7 @@ public class DirectoryWatcher {
         System.out.println("Novo arquivo encontrado: " + file.getFileName());
 
         executor.submit(() -> processFile(file));
-
     }
-
     private void processFile(Path file) {
 
         try {
@@ -96,7 +91,19 @@ public class DirectoryWatcher {
             e.printStackTrace();
 
         }
+    }
+    private void shutdown(){
+        running = false;
+        executor.shutdown();
 
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)){
+                executor.shutdownNow();
+            }
+        }catch (InterruptedException e){
+            executor.shutdown();
+            Thread.currentThread().interrupt();
+        }
     }
 
 }

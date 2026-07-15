@@ -16,11 +16,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 public class FileProcessor {
-
-    private final List<Customer> customers = new ArrayList<>();
-    private final List<Salesman> salesmen = new ArrayList<>();
-    private final List<Sale> sales = new ArrayList<>();
-
     private final ReportService reportService = new ReportService();
 
     public void process(Path file) {
@@ -29,13 +24,17 @@ public class FileProcessor {
                 "Processando arquivo: " + file.getFileName()
         );
 
-        readFile(file);
+        List<Customer> customers = new ArrayList<>();
+        List<Salesman> salesmen = new ArrayList<>();
+        List<Sale> sales = new ArrayList<>();
 
-        generateReport(file);
+        readFile(file, customers, salesmen, sales);
+
+        generateReport(file, customers, salesmen, sales);
 
     }
 
-    private void readFile(Path file) {
+    private void readFile(Path file, List<Customer> customers, List<Salesman> salesmen, List<Sale> sales) {
 
         try (BufferedReader reader = Files.newBufferedReader(file)) {
 
@@ -43,7 +42,7 @@ public class FileProcessor {
 
             while ((line = reader.readLine()) != null) {
 
-                processLineSafely(line);
+                processLineSafely(line, customers, salesmen, sales);
 
             }
 
@@ -55,11 +54,11 @@ public class FileProcessor {
 
     }
 
-    private void processLineSafely(String line) {
+    private void processLineSafely(String line, List<Customer> customers, List<Salesman> salesmen, List<Sale> sales) {
 
         try {
 
-            processLine(line);
+            processLine(line, customers, salesmen, sales);
 
         } catch (Exception e) {
 
@@ -71,7 +70,7 @@ public class FileProcessor {
 
     }
 
-    private void processLine(String line) {
+    private void processLine(String line, List<Customer> customers, List<Salesman> salesmen, List<Sale> sales) {
 
         String[] fields = line.split("ç");
 
@@ -133,7 +132,7 @@ public class FileProcessor {
 
     }
 
-    private void generateReport(Path inputFile) {
+    private void generateReport(Path inputFile, List<Customer> customers, List<Salesman> salesmen, List<Sale> sales) {
 
         Report report = reportService.generate(
                 customers,
